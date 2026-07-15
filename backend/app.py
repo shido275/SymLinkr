@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import scanner
 import linker
 
-PORT = 8080
+PORT = 8085
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     FRONTEND_DIR = os.path.join(sys._MEIPASS, "frontend")
 else:

@@ -1,0 +1,6 @@
+{
+    "workbench.externalBrowser": "firefox",
+    "debug.javascript.defaultRuntimeExecutable": {
+        "pwa-node": "node"
+    }
+}
