@@ -1,0 +1,39 @@
+name: Build SymLinkr Executable
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pyinstaller websockets requests psutil
+
+    - name: Compile Standalone EXE
+      run: |
+        python build_exe.py
+
+    - name: Upload Executable Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: symlinkr-windows-exe
+        path: dist/symlinkr.exe
+        if-no-files-found: error
+        retention-days: 7

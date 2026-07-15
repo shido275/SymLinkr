@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SymLinkr | Audio Plugin Portability Manager</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for beautiful icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background glowing spots -->
+    <div class="glow-bg glow-purple"></div>
+    <div class="glow-bg glow-teal"></div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-link-slash brand-icon"></i>
+                <span class="brand-text">Sym<span>Linkr</span></span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-tab="packager">
+                    <i class="fa-solid fa-box-archive"></i>
+                    <span>Scan & Pack</span>
+                </button>
+                <button class="nav-item" data-tab="deployer">
+                    <i class="fa-solid fa-file-import"></i>
+                    <span>Deploy & Link</span>
+                </button>
+                <button class="nav-item" data-tab="health">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                    <span>Health Center</span>
+                </button>
+                <button class="nav-item" data-tab="logs">
+                    <i class="fa-solid fa-terminal"></i>
+                    <span>Activity Logs</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span class="status-dot online"></span>
+                    <span id="backend-status">Connected to Host</span>
+                </div>
+                <div class="system-info">
+                    <div class="info-row"><i class="fa-solid fa-microchip"></i> <span id="sys-os">Linux</span></div>
+                    <div class="info-row"><i class="fa-solid fa-database"></i> <span id="sys-disk">-- GB Free</span></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <header class="content-header">
+                    <h1>System Dashboard</h1>
+                    <p>Overview of your local and portable audio plugin environment.</p>
+                </header>
+
+                <!-- Stats Cards Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon purple"><i class="fa-solid fa-plug"></i></div>
+                        <div class="stat-details">
+                            <h3>Total Plugins</h3>
+                            <p class="stat-value" id="stat-total-plugins">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon teal"><i class="fa-solid fa-link"></i></div>
+                        <div class="stat-details">
+                            <h3>Active Symlinks</h3>
+                            <p class="stat-value" id="stat-active-links">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="fa-solid fa-hard-drive"></i></div>
+                        <div class="stat-details">
+                            <h3>Wine Prefixes</h3>
+                            <p class="stat-value" id="stat-prefixes">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" id="health-stat-card">
+                        <div class="stat-icon green" id="health-stat-icon"><i class="fa-solid fa-check-circle"></i></div>
+                        <div class="stat-details">
+                            <h3>System Health</h3>
+                            <p class="stat-value" id="stat-health">Perfect</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main dashboard layout -->
+                <div class="dashboard-layout">
+                    <!-- Left: Wine prefixes and settings -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <h2><i class="fa-brands fa-windows"></i> Detected Wine Prefixes</h2>
+                        </div>
+                        <div class="card-body">
+                            <ul class="prefix-list" id="prefix-list">
+                                <li class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Detecting Wine environments...</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Right: Quick actions -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-bolt"></i> Quick Actions</h2>
+                        </div>
+                        <div class="card-body quick-actions-body">
+                            <button class="btn btn-primary btn-block" onclick="switchTab('packager')">
+                                <i class="fa-solid fa-magnifying-glass"></i> Scan Local Plugins
+                            </button>
+                            <button class="btn btn-secondary btn-block" onclick="switchTab('deployer')">
+                                <i class="fa-solid fa-file-import"></i> Restore from Portable Folder
+                            </button>
+                            <button class="btn btn-accent btn-block" id="btn-quick-health">
+                                <i class="fa-solid fa-heart-pulse"></i> Run System Diagnostics
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scan & Pack Tab -->
+            <section id="packager" class="tab-content">
+                <header class="content-header">
+                    <h1>Plugin Packager Wizard</h1>
+                    <p>Relocate standard plugin files and bundle them into portable directories with local configuration mappings.</p>
+                </header>
+
+                <div class="packager-wizard">
+                    <!-- Step Progress Indicator -->
+                    <div class="wizard-steps">
+                        <div class="step active" id="step-ind-1">
+                            <div class="step-num">1</div>
+                            <span class="step-title">Select Plugin</span>
+                        </div>
+                        <div class="step" id="step-ind-2">
+                            <div class="step-num">2</div>
+                            <span class="step-title">Map Resources</span>
+                        </div>
+                        <div class="step" id="step-ind-3">
+                            <div class="step-num">3</div>
+                            <span class="step-title">Package & Link</span>
+                        </div>
+                    </div>
+
+                    <!-- Wizard Card -->
+                    <div class="card glass-card wizard-card">
+                        <!-- Step 1: Select Plugin -->
+                        <div class="wizard-step-content active" id="wizard-step-1">
+                            <div class="scanner-controls">
+                                <div class="search-box">
+                                    <i class="fa-solid fa-search"></i>
+                                    <input type="text" id="plugin-search" placeholder="Search scanned plugins...">
+                                </div>
+                                <select id="format-filter" class="form-select">
+                                    <option value="all">All Formats</option>
+                                    <option value="VST2">VST2</option>
+                                    <option value="VST3">VST3</option>
+                                    <option value="CLAP">CLAP</option>
+                                    <option value="AAX">AAX</option>
+                                </select>
+                                <button class="btn btn-primary" id="btn-rescan-plugins">
+                                    <i class="fa-solid fa-arrows-rotate"></i> Scan Now
+                                </button>
+                            </div>
+
+                            <div class="plugin-table-container">
+                                <table class="plugin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Format</th>
+                                            <th>Environment</th>
+                                            <th>Current Location</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="scanned-plugins-body">
+                                        <tr>
+                                            <td colspan="5" class="placeholder-row">
+                                                <i class="fa-solid fa-magnifying-glass fa-bounce"></i>
+                                                <p>Click "Scan Now" to load plugins installed on this system.</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Map Resources -->
+                        <div class="wizard-step-content" id="wizard-step-2">
+                            <div class="selected-plugin-banner">
+                                <div class="plugin-badge" id="selected-plugin-format">VST3</div>
+                                <h2 id="selected-plugin-name">Plugin Name</h2>
+                                <span class="plugin-path-text" id="selected-plugin-path">/usr/lib/vst3/Plugin.vst3</span>
+                            </div>
+
+                            <div class="form-group mt-4">
+                                <label class="form-label"><i class="fa-solid fa-folder-tree"></i> Associated Configuration & Resource Folders</label>
+                                <p class="form-help">Select the folder(s) where this plugin stores presets, license files, waves, or user settings. SymLinkr automatically scans for likely folders matching the plugin name.</p>
+                                
+                                <div class="suggestions-list" id="resource-suggestions">
+                                    <!-- Populated dynamically -->
+                                </div>
+
+                                <div class="manual-resource-add mt-3">
+                                    <div class="input-group">
+                                        <input type="text" id="manual-resource-path" class="form-control" placeholder="Add custom directory path manually (e.g. /home/user/.wine/drive_c/ProgramData/Vendor)">
+                                        <button class="btn btn-secondary" id="btn-add-manual-resource"><i class="fa-solid fa-plus"></i> Add Path</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group mt-4" id="wine-registry-group">
+                                <label class="form-label"><i class="fa-brands fa-windows"></i> Wine Registry Keys (Export/Restore)</label>
+                                <p class="form-help">Export registry configurations for Windows plugins in Wine. SymLinkr will backup registry entries matching these paths and re-import them during restore.</p>
+                                <div class="registry-inputs" id="registry-keys-list">
+                                    <!-- Populated dynamically -->
+                                </div>
+                                <div class="input-group mt-2">
+                                    <input type="text" id="manual-reg-key" class="form-control" placeholder="HKEY_CURRENT_USER\Software\Manufacturer">
+                                    <button class="btn btn-secondary" id="btn-add-manual-reg"><i class="fa-solid fa-plus"></i> Add Key</button>
+                                </div>
+                            </div>
+
+                            <div class="wizard-nav-buttons mt-4">
+                                <button class="btn btn-secondary" onclick="wizardGoTo(1)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                                <button class="btn btn-primary" onclick="wizardGoTo(3)">Next: Packaging Settings <i class="fa-solid fa-arrow-right"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Package & Link -->
+                        <div class="wizard-step-content" id="wizard-step-3">
+                            <h2>Packaging Settings</h2>
+                            <p class="form-help">Configure where files will be stored and how they will link back to the system.</p>
+
+                            <div class="form-grid mt-4">
+                                <div class="form-group">
+                                    <label class="form-label" for="portable-target-dir">Portable Destination Directory</label>
+                                    <input type="text" id="portable-target-dir" class="form-control" placeholder="/mnt/external_ssd/PluginLibrary/MyPluginName">
+                                    <p class="form-help">The central folder where the binaries, configs, and registry data will live. Usually on your external SSD or cloud storage folder.</p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="linking-strategy">Linking Strategy</label>
+                                    <select id="linking-strategy" class="form-select">
+                                        <option value="symlink">(Recommended) Symbolic Link - Standard cross-device redirection</option>
+                                        <option value="hardlink">Hard Link - Standard files only (cannot span multiple drives)</option>
+                                    </select>
+                                    <p class="form-help">Some plugins with strict protections may reject symbolic links. Hard links make files look 100% native (but must be on the same drive partition).</p>
+                                </div>
+                            </div>
+
+                            <div class="wizard-summary-box mt-4">
+                                <h3>Package Summary</h3>
+                                <ul class="summary-list">
+                                    <li><i class="fa-solid fa-check text-success"></i> Main binary folder will move to destination.</li>
+                                    <li><i class="fa-solid fa-check text-success"></i> Selected resource paths will be migrated.</li>
+                                    <li><i class="fa-solid fa-check text-success"></i> Symlinks will be created pointing from system directories to the destination.</li>
+                                </ul>
+                            </div>
+
+                            <div class="wizard-nav-buttons mt-4">
+                                <button class="btn btn-secondary" onclick="wizardGoTo(2)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                                <button class="btn btn-success" id="btn-execute-pack"><i class="fa-solid fa-boxes-packing"></i> Relocate & Symlink</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Deploy / Link Tab -->
+            <section id="deployer" class="tab-content">
+                <header class="content-header">
+                    <h1>Deploy & Link Restorer</h1>
+                    <p>Restore portable plugin bundles onto a new system or prefix instantly. Point SymLinkr to your portable directories to link them back.</p>
+                </header>
+
+                <div class="deployer-layout">
+                    <!-- Deploy Single Profile -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-file-import"></i> Restore Single Plugin</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label" for="restore-dir-input">Portable Plugin Directory Path</label>
+                                <div class="input-group">
+                                    <input type="text" id="restore-dir-input" class="form-control" placeholder="/mnt/external_ssd/PluginLibrary/Serum">
+                                    <button class="btn btn-primary" id="btn-load-manifest"><i class="fa-solid fa-circle-info"></i> Load Info</button>
+                                </div>
+                                <p class="form-help">Directory containing the plugin's `symlinkr.json` profile.</p>
+                            </div>
+
+                            <!-- Loaded Manifest details -->
+                            <div id="manifest-info-panel" class="manifest-info-panel hidden">
+                                <div class="manifest-header">
+                                    <span class="plugin-badge" id="manifest-format">VST3</span>
+                                    <h3 id="manifest-name">Serum</h3>
+                                    <span class="manifest-type" id="manifest-type">Wine Plugin</span>
+                                </div>
+                                
+                                <div class="manifest-details mt-3">
+                                    <div class="manifest-section">
+                                        <h4>Paths to be recreated:</h4>
+                                        <ul id="manifest-paths-list"></ul>
+                                    </div>
+                                    <div class="manifest-section mt-2" id="manifest-reg-section">
+                                        <h4>Registry keys to import:</h4>
+                                        <ul id="manifest-reg-list"></ul>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <label class="form-label" for="deploy-strategy">Linking Strategy Override (Optional)</label>
+                                    <select id="deploy-strategy" class="form-select">
+                                        <option value="">Keep original configuration strategy</option>
+                                        <option value="symlink">Force Symbolic Link</option>
+                                        <option value="hardlink">Force Hard Link</option>
+                                    </select>
+                                </div>
+
+                                <button class="btn btn-success btn-block mt-3" id="btn-execute-deploy">
+                                    <i class="fa-solid fa-link"></i> Deploy & Re-link
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scan & Deploy Library -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-folder-open"></i> Bulk library restorer</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label" for="library-dir-input">Library Parent Directory Path</label>
+                                <div class="input-group">
+                                    <input type="text" id="library-dir-input" class="form-control" placeholder="/mnt/external_ssd/PluginLibrary">
+                                    <button class="btn btn-secondary" id="btn-scan-library"><i class="fa-solid fa-magnifying-glass"></i> Scan Library</button>
+                                </div>
+                                <p class="form-help">Scans a directory containing multiple subfolders to find all portable plugins.</p>
+                            </div>
+
+                            <div class="library-scanned-container mt-3">
+                                <table class="library-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Plugin Name</th>
+                                            <th>Format</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="library-plugins-body">
+                                        <tr>
+                                            <td colspan="4" class="placeholder-row">
+                                                <p>Enter directory and click Scan Library</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Health Center Tab -->
+            <section id="health" class="tab-content">
+                <header class="content-header">
+                    <h1>Link Diagnostics & Health Center</h1>
+                    <p>Scan and repair all deployed plugin symlinks. If you swap Wine prefixes, clean paths, or move target directories, update them here.</p>
+                </header>
+
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-shield-halved"></i> Global Symlink Auditing</h2>
+                        <button class="btn btn-primary" id="btn-scan-health"><i class="fa-solid fa-heart-pulse"></i> Check Health</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="health-table-container">
+                            <table class="health-table">
+                                <thead>
+                                    <tr>
+                                        <th>Plugin</th>
+                                        <th>Format</th>
+                                        <th>Link Location</th>
+                                        <th>Points To</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="health-links-body">
+                                    <tr>
+                                        <td colspan="6" class="placeholder-row">
+                                            <p>Scan portable library in "Deploy & Link" to register plugins, or click Check Health to inspect.</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Activity Logs Tab -->
+            <section id="logs" class="tab-content">
+                <header class="content-header">
+                    <h1>System Activity Logs</h1>
+                    <p>Live terminal stream showing files moved, symlinks created, registry operations, and diagnostics.</p>
+                </header>
+
+                <div class="card glass-card logs-card">
+                    <div class="logs-header">
+                        <span class="terminal-badge"><i class="fa-solid fa-circle"></i> Terminal</span>
+                        <button class="btn btn-clear-logs" id="btn-clear-logs"><i class="fa-solid fa-trash-can"></i> Clear Logs</button>
+                    </div>
+                    <div class="logs-console" id="logs-console">
+                        <div class="log-line system">[SYSTEM] SymLinkr UI loaded. Awaiting instructions...</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
